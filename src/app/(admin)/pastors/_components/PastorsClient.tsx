@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import PastorFormModal from "./PastorFormModal";
 import ResetPasswordModal from "./ResetPasswordModal";
 import CredentialsModal from "./CredentialsModal";
+import AssignmentPanel from "./AssignmentPanel";
 
 type Pastor = {
   id: string;
@@ -29,6 +30,7 @@ export default function PastorsClient({ initialPastors }: Props) {
   const [resetting, setResetting] = useState<Pastor | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [assigningTo, setAssigningTo] = useState<Pastor | null>(null);
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/pastors");
@@ -150,6 +152,15 @@ export default function PastorsClient({ initialPastors }: Props) {
                 <td className="px-5 py-4">
                   <div className="flex items-center justify-end gap-1">
                     <button
+                      onClick={() => setAssigningTo(pastor)}
+                      className="p-2 rounded-lg text-muted-foreground hover:bg-neutral-100 hover:text-foreground transition-colors"
+                      title="Gérer les affectations"
+                    >
+                      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </button>
+                    <button
                       onClick={() => { setEditing(pastor); setShowForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:bg-neutral-100 hover:text-foreground transition-colors"
                       title="Modifier"
@@ -224,23 +235,29 @@ export default function PastorsClient({ initialPastors }: Props) {
             <p className="text-xs text-muted-foreground pl-12 mb-3">
               {pastor.churchCount === 0 ? "Non affecté" : `${pastor.churchCount} église${pastor.churchCount > 1 ? "s" : ""}`}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setAssigningTo(pastor)}
+                className="flex-1 h-9 rounded-lg border border-border text-xs font-medium hover:bg-neutral-50 transition-colors min-w-[80px]"
+              >
+                Affectations
+              </button>
               <button
                 onClick={() => { setEditing(pastor); setShowForm(true); }}
-                className="flex-1 h-9 rounded-lg border border-border text-xs font-medium hover:bg-neutral-50 transition-colors"
+                className="flex-1 h-9 rounded-lg border border-border text-xs font-medium hover:bg-neutral-50 transition-colors min-w-[80px]"
               >
                 Modifier
               </button>
               <button
                 onClick={() => setResetting(pastor)}
-                className="flex-1 h-9 rounded-lg border border-border text-xs font-medium hover:bg-neutral-50 transition-colors"
+                className="flex-1 h-9 rounded-lg border border-border text-xs font-medium hover:bg-neutral-50 transition-colors min-w-[80px]"
               >
                 Réinit. mdp
               </button>
               <button
                 onClick={() => toggleStatus(pastor)}
                 disabled={togglingId === pastor.id}
-                className={`flex-1 h-9 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 border ${
+                className={`flex-1 h-9 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 border min-w-[80px] ${
                   pastor.isActive
                     ? "text-warning border-orange-200 hover:bg-orange-50"
                     : "text-success border-green-200 hover:bg-green-50"
@@ -286,6 +303,14 @@ export default function PastorsClient({ initialPastors }: Props) {
           email={credentials.email}
           tempPassword={credentials.tempPassword}
           onClose={() => { setCredentials(null); refresh(); }}
+        />
+      )}
+
+      {assigningTo && (
+        <AssignmentPanel
+          pastor={assigningTo}
+          onClose={() => setAssigningTo(null)}
+          onChanged={refresh}
         />
       )}
     </>
