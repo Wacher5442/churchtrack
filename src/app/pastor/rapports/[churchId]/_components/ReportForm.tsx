@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { INDICATOR_LABELS, type IndicatorKey } from "@/lib/variations";
+import { INDICATOR_LABELS, computeVariation, type IndicatorKey } from "@/lib/variations";
 
 type Report = {
   id: string;
@@ -30,6 +30,7 @@ type Props = {
   periodOpen: boolean;
   closeDate: string;
   initialReport: Report | null;
+  previousReport: Report | null;
 };
 
 const FIELDS: { key: IndicatorKey; icon: React.ReactNode }[] = [
@@ -102,6 +103,7 @@ export default function ReportForm({
   periodOpen,
   closeDate,
   initialReport,
+  previousReport,
 }: Props) {
   const router = useRouter();
   const [values, setValues] = useState<Values>(toValues(initialReport));
@@ -205,12 +207,16 @@ export default function ReportForm({
 
       {/* Fields */}
       <div className="bg-white rounded-xl border border-border divide-y divide-border mb-5">
-        {FIELDS.map(({ key, icon }) => (
+        {FIELDS.map(({ key, icon }) => {
+          const prev = previousReport?.[key] ?? null;
+          const variation = computeVariation(values[key], prev);
+          return (
           <div key={key} className="flex items-center gap-4 px-5 py-4">
             <span className="text-muted-foreground shrink-0">{icon}</span>
-            <span className="flex-1 text-sm font-medium text-foreground">
-              {INDICATOR_LABELS[key]}
-            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">{INDICATOR_LABELS[key]}</p>
+              <VariationChip variation={variation} prevValue={prev} />
+            </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
@@ -242,7 +248,8 @@ export default function ReportForm({
               </button>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Error */}
@@ -322,6 +329,42 @@ export default function ReportForm({
       )}
     </div>
   );
+}
+
+function VariationChip({
+  variation,
+  prevValue,
+}: {
+  variation: ReturnType<typeof computeVariation>;
+  prevValue: number | null;
+}) {
+  if (prevValue === null) return null;
+
+  if (variation.label === "stable") {
+    return (
+      <p className="text-xs text-muted-foreground mt-0.5">
+        = stable · sem. passée : {prevValue}
+      </p>
+    );
+  }
+
+  if (variation.label === "up") {
+    return (
+      <p className="text-xs text-success mt-0.5 font-medium">
+        ↑ +{variation.absolute} · sem. passée : {prevValue}
+      </p>
+    );
+  }
+
+  if (variation.label === "down") {
+    return (
+      <p className="text-xs text-danger mt-0.5 font-medium">
+        ↓ {variation.absolute} · sem. passée : {prevValue}
+      </p>
+    );
+  }
+
+  return null;
 }
 
 function StatusBadge({ status, periodOpen }: { status: "DRAFT" | "SUBMITTED" | null; periodOpen: boolean }) {

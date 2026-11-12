@@ -41,24 +41,29 @@ export default async function ReportPage({ params }: Params) {
   closeDate.setHours(23, 59, 59, 999);
   const periodOpen = new Date() <= closeDate;
 
-  const existing = await db.weeklyReport.findUnique({
-    where: { churchId_weekStart: { churchId, weekStart } },
-  });
+  const prevWeekStart = new Date(weekStart);
+  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
 
-  const report = existing
-    ? {
-        id: existing.id.toString(),
-        attendance: existing.attendance,
-        newcomers: existing.newcomers,
-        salvationDecisions: existing.salvationDecisions,
-        churchIntegration: existing.churchIntegration,
-        tribeIntegration: existing.tribeIntegration,
-        servants: existing.servants,
-        status: existing.status as "DRAFT" | "SUBMITTED",
-        submittedAt: existing.submittedAt?.toISOString() ?? null,
-        updatedAt: existing.updatedAt.toISOString(),
-      }
-    : null;
+  const [existing, previous] = await Promise.all([
+    db.weeklyReport.findUnique({ where: { churchId_weekStart: { churchId, weekStart } } }),
+    db.weeklyReport.findUnique({ where: { churchId_weekStart: { churchId, weekStart: prevWeekStart } } }),
+  ]);
+
+  const toReportData = (r: typeof existing) =>
+    r
+      ? {
+          id: r.id.toString(),
+          attendance: r.attendance,
+          newcomers: r.newcomers,
+          salvationDecisions: r.salvationDecisions,
+          churchIntegration: r.churchIntegration,
+          tribeIntegration: r.tribeIntegration,
+          servants: r.servants,
+          status: r.status as "DRAFT" | "SUBMITTED",
+          submittedAt: r.submittedAt?.toISOString() ?? null,
+          updatedAt: r.updatedAt.toISOString(),
+        }
+      : null;
 
   const fmtDate = (d: Date) =>
     d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -74,7 +79,8 @@ export default async function ReportPage({ params }: Params) {
         weekLabel={`Semaine du ${fmtDate(weekStart)} au ${fmtDate(weekEnd)}`}
         periodOpen={periodOpen}
         closeDate={closeDate.toISOString()}
-        initialReport={report}
+        initialReport={toReportData(existing)}
+        previousReport={toReportData(previous)}
       />
     </div>
   );
