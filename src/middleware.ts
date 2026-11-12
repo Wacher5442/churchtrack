@@ -12,7 +12,7 @@ export default auth((req) => {
 
   const isPublicPath = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
   const isChangePasswordPage = path === "/changer-mot-de-passe";
-  const isPastorRoute = PASTOR_PATHS.some((p) => path.startsWith(p));
+  const isPastorRoute = PASTOR_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 
   if (!isLoggedIn && !isPublicPath) {
     return NextResponse.redirect(new URL("/login", nextUrl));
