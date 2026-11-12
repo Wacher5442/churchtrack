@@ -1,26 +1,64 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ChurchTrack — Palette principale */
+  --primary:          174 62% 35%;
+  --primary-hover:    174 62% 28%;
+  --primary-light:    174 40% 92%;
+  --primary-subtle:   174 25% 97%;
+
+  /* Neutres */
+  --neutral-900:      220 15% 12%;
+  --neutral-700:      220 12% 32%;
+  --neutral-500:      220 10% 46%;
+  --neutral-300:      220 12% 72%;
+  --neutral-200:      220 14% 90%;
+  --neutral-100:      220 17% 95%;
+  --neutral-50:       220 20% 97%;
+
+  /* Sémantiques */
+  --success:          142 55% 38%;
+  --danger:           0   68% 50%;
+  --warning:          38  90% 50%;
+
+  /* Surfaces */
+  --background:       hsl(var(--neutral-50));
+  --foreground:       hsl(var(--neutral-900));
+  --border:           hsl(var(--neutral-200));
+  --muted:            hsl(var(--neutral-100));
+  --muted-foreground: hsl(var(--neutral-500));
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary:          hsl(var(--primary));
+  --color-primary-hover:    hsl(var(--primary-hover));
+  --color-primary-light:    hsl(var(--primary-light));
+  --color-primary-subtle:   hsl(var(--primary-subtle));
+  --color-success:          hsl(var(--success));
+  --color-danger:           hsl(var(--danger));
+  --color-warning:          hsl(var(--warning));
+  --color-background:       var(--background);
+  --color-foreground:       var(--foreground);
+  --color-border:           var(--border);
+  --color-muted:            var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --font-sans: "Inter", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Chiffres tabulaires pour les indicateurs */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PASTOR
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+}
+
+model AppConfig {
+  id                   Int       @id @default(1)
+  submissionWindowDays Int       @default(6) @map("submission_window_days")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  updatedById          BigInt?   @map("updated_by")
+  updatedBy            User?     @relation(fields: [updatedById], references: [id])
+
+  @@map("app_config")
+}
+
+model User {
+  id                 BigInt    @id @default(autoincrement())
+  fullName           String    @map("full_name") @db.VarChar(150)
+  email              String    @unique @db.VarChar(180)
+  passwordHash       String    @map("password_hash")
+  role               Role
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  churchAssignments  PastorChurch[]
+  submittedReports   WeeklyReport[] @relation("SubmittedBy")
+  unlockedReports    WeeklyReport[] @relation("UnlockedBy")
+  auditLogs          ReportAuditLog[]
+  appConfigUpdates   AppConfig[]
+
+  @@map("users")
+}
+
+model Church {
+  id          BigInt    @id @default(autoincrement())
+  name        String    @db.VarChar(150)
+  location    String?   @db.VarChar(255)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  pastors     PastorChurch[]
+  reports     WeeklyReport[]
+
+  @@map("churches")
+}
+
+model PastorChurch {
+  id         BigInt    @id @default(autoincrement())
+  pastorId   BigInt    @map("pastor_id")
+  churchId   BigInt    @map("church_id")
+  isPrimary  Boolean   @default(false) @map("is_primary")
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  isActive   Boolean   @default(true) @map("is_active")
+
+  pastor     User      @relation(fields: [pastorId], references: [id])
+  church     Church    @relation(fields: [churchId], references: [id])
+
+  @@unique([pastorId, churchId])
+  @@index([pastorId, isActive])
+  @@index([churchId, isPrimary])
+  @@map("pastor_churches")
+}
+
+model WeeklyReport {
+  id                  BigInt        @id @default(autoincrement())
+  churchId            BigInt        @map("church_id")
+  weekStart           DateTime      @map("week_start") @db.Date
+  weekEnd             DateTime      @map("week_end") @db.Date
+
+  attendance          Int           @default(0)
+  newcomers           Int           @default(0)
+  salvationDecisions  Int           @default(0) @map("salvation_decisions")
+  churchIntegration   Int           @default(0) @map("church_integration")
+  tribeIntegration    Int           @default(0) @map("tribe_integration")
+  servants            Int           @default(0)
+
+  status              ReportStatus  @default(DRAFT)
+  submittedById       BigInt?       @map("submitted_by")
+  submittedAt         DateTime?     @map("submitted_at")
+
+  periodUnlockedById  BigInt?       @map("period_unlocked_by")
+  periodUnlockedAt    DateTime?     @map("period_unlocked_at")
+
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  church              Church        @relation(fields: [churchId], references: [id])
+  submittedBy         User?         @relation("SubmittedBy", fields: [submittedById], references: [id])
+  unlockedBy          User?         @relation("UnlockedBy", fields: [periodUnlockedById], references: [id])
+  auditLogs           ReportAuditLog[]
+
+  @@unique([churchId, weekStart])
+  @@index([churchId, weekStart])
+  @@index([status])
+  @@map("weekly_reports")
+}
+
+model ReportAuditLog {
+  id         BigInt   @id @default(autoincrement())
+  reportId   BigInt   @map("report_id")
+  userId     BigInt   @map("user_id")
+  action     String   @db.VarChar(50)
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  report     WeeklyReport @relation(fields: [reportId], references: [id])
+  user       User         @relation(fields: [userId], references: [id])
+
+  @@index([reportId])
+  @@map("report_audit_logs")
+}
