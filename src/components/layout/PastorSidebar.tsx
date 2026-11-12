@@ -16,7 +16,7 @@ const NAV = [
     ),
   },
   {
-    href: "/pastor/reports",
+    href: "/pastor/rapports",
     label: "Mes rapports",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
