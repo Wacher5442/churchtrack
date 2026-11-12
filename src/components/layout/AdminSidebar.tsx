@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 
 const NAV = [
   {
-    href: "/admin/dashboard",
+    href: "/dashboard",
     label: "Tableau de bord",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -16,7 +16,7 @@ const NAV = [
     ),
   },
   {
-    href: "/admin/churches",
+    href: "/churches",
     label: "Églises",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -25,7 +25,7 @@ const NAV = [
     ),
   },
   {
-    href: "/admin/pastors",
+    href: "/pastors",
     label: "Pasteurs",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -34,7 +34,7 @@ const NAV = [
     ),
   },
   {
-    href: "/admin/reports",
+    href: "/reports",
     label: "Rapports",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -43,7 +43,7 @@ const NAV = [
     ),
   },
   {
-    href: "/admin/statistics",
+    href: "/statistics",
     label: "Statistiques",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -52,7 +52,7 @@ const NAV = [
     ),
   },
   {
-    href: "/admin/settings",
+    href: "/settings",
     label: "Paramètres",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>

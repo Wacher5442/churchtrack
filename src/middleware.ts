@@ -1,19 +1,20 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
+const PUBLIC_PATHS = ["/login"];
+const PASTOR_PATHS = ["/pastor"];
+
 export default auth((req) => {
   const { nextUrl } = req;
   const session = req.auth;
   const isLoggedIn = !!session;
   const path = nextUrl.pathname;
 
-  const isAuthPage = path === "/login";
+  const isPublicPath = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
   const isChangePasswordPage = path === "/changer-mot-de-passe";
-  const isAdminRoute = path.startsWith("/admin");
-  const isPastorRoute = path.startsWith("/pastor");
-  const isProtected = isAdminRoute || isPastorRoute || isChangePasswordPage;
+  const isPastorRoute = PASTOR_PATHS.some((p) => path.startsWith(p));
 
-  if (!isLoggedIn && isProtected) {
+  if (!isLoggedIn && !isPublicPath) {
     return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
@@ -21,22 +22,16 @@ export default auth((req) => {
     const { role, mustChangePassword } = session.user;
 
     if (mustChangePassword && !isChangePasswordPage) {
-      return NextResponse.redirect(
-        new URL("/changer-mot-de-passe", nextUrl)
-      );
+      return NextResponse.redirect(new URL("/changer-mot-de-passe", nextUrl));
     }
 
-    if (isAuthPage) {
-      const dest = role === "ADMIN" ? "/admin/dashboard" : "/pastor/dashboard";
+    if (isPublicPath) {
+      const dest = role === "ADMIN" ? "/dashboard" : "/pastor/dashboard";
       return NextResponse.redirect(new URL(dest, nextUrl));
     }
 
-    if (isAdminRoute && role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/pastor/dashboard", nextUrl));
-    }
-
     if (isPastorRoute && role !== "PASTOR") {
-      return NextResponse.redirect(new URL("/admin/dashboard", nextUrl));
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
     }
   }
 

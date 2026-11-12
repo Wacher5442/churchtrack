@@ -6,6 +6,6 @@ export default async function RootPage() {
 
   if (!session) redirect("/login");
   if (session.user.mustChangePassword) redirect("/changer-mot-de-passe");
-  if (session.user.role === "ADMIN") redirect("/admin/dashboard");
+  if (session.user.role === "ADMIN") redirect("/dashboard");
   redirect("/pastor/dashboard");
 }
