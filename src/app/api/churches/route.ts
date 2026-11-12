@@ -24,7 +24,21 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(churches);
+  return NextResponse.json(
+    churches.map((c) => ({
+      id: c.id.toString(),
+      name: c.name,
+      location: c.location,
+      isActive: c.isActive,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      pastors: c.pastors.map((p) => ({
+        isPrimary: p.isPrimary,
+        isActive: p.isActive,
+        pastor: { id: p.pastor.id.toString(), fullName: p.pastor.fullName },
+      })),
+    }))
+  );
 }
 
 export async function POST(req: Request) {
@@ -46,5 +60,8 @@ export async function POST(req: Request) {
     data: { name: parsed.data.name, location: parsed.data.location },
   });
 
-  return NextResponse.json(church, { status: 201 });
+  return NextResponse.json(
+    { id: church.id.toString(), name: church.name, location: church.location, isActive: church.isActive },
+    { status: 201 }
+  );
 }

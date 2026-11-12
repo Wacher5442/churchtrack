@@ -26,5 +26,5 @@ export async function PATCH(
     data: { isActive: !church.isActive },
   });
 
-  return NextResponse.json(updated);
+  return NextResponse.json({ id: updated.id.toString(), isActive: updated.isActive });
 }

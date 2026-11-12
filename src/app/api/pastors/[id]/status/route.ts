@@ -27,5 +27,5 @@ export async function PATCH(
     select: { id: true, isActive: true },
   });
 
-  return NextResponse.json(updated);
+  return NextResponse.json({ id: updated.id.toString(), isActive: updated.isActive });
 }

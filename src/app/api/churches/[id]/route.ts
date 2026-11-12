@@ -32,7 +32,18 @@ export async function GET(
     return NextResponse.json({ error: "Église introuvable" }, { status: 404 });
   }
 
-  return NextResponse.json(church);
+  return NextResponse.json({
+    id: church.id.toString(),
+    name: church.name,
+    location: church.location,
+    isActive: church.isActive,
+    createdAt: church.createdAt,
+    pastors: church.pastors.map((p) => ({
+      isPrimary: p.isPrimary,
+      isActive: p.isActive,
+      pastor: { id: p.pastor.id.toString(), fullName: p.pastor.fullName },
+    })),
+  });
 }
 
 export async function PUT(
@@ -59,5 +70,10 @@ export async function PUT(
     data: { name: parsed.data.name, location: parsed.data.location },
   });
 
-  return NextResponse.json(church);
+  return NextResponse.json({
+    id: church.id.toString(),
+    name: church.name,
+    location: church.location,
+    isActive: church.isActive,
+  });
 }

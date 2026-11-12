@@ -37,7 +37,20 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(pastors);
+  return NextResponse.json(
+    pastors.map((p) => ({
+      id: p.id.toString(),
+      fullName: p.fullName,
+      email: p.email,
+      isActive: p.isActive,
+      mustChangePassword: p.mustChangePassword,
+      createdAt: p.createdAt,
+      churchAssignments: p.churchAssignments.map((a) => ({
+        churchId: a.churchId.toString(),
+        isPrimary: a.isPrimary,
+      })),
+    }))
+  );
 }
 
 export async function POST(req: Request) {
@@ -84,5 +97,8 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json(pastor, { status: 201 });
+  return NextResponse.json(
+    { id: pastor.id.toString(), fullName: pastor.fullName, email: pastor.email, isActive: pastor.isActive, mustChangePassword: pastor.mustChangePassword, createdAt: pastor.createdAt },
+    { status: 201 }
+  );
 }
