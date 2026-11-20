@@ -1,4 +1,4 @@
-const CACHE = "churchtrack-v1";
+const CACHE = "churchtrack-v2";
 
 // Assets statiques Next.js (content-hashed, safe to cache forever)
 const STATIC_PATTERNS = [
@@ -18,6 +18,36 @@ self.addEventListener("activate", (event) => {
         Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
       )
       .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let data;
+  try { data = event.data.json(); } catch { data = {}; }
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "ChurchTrack", {
+      body: data.body ?? "",
+      icon: "/church.png",
+      badge: "/church.png",
+      data: { url: data.url ?? "/pastor/dashboard" },
+      requireInteraction: false,
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? "/pastor/dashboard";
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url.includes(url) && "focus" in client) return client.focus();
+        }
+        return clients.openWindow(url);
+      })
   );
 });
 

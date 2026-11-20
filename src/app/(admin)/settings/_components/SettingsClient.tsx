@@ -13,20 +13,35 @@ function getClosingLabel(days: number): string {
 
 type Props = {
   initialValue: number;
+  initialNotificationsEnabled: boolean;
+  initialReminderDays: number;
   updatedAt: string | null;
   updatedBy: string | null;
 };
 
-export default function SettingsClient({ initialValue, updatedAt, updatedBy }: Props) {
+export default function SettingsClient({
+  initialValue,
+  initialNotificationsEnabled,
+  initialReminderDays,
+  updatedAt,
+  updatedBy,
+}: Props) {
   const [value, setValue] = useState(initialValue);
   const [saved, setSaved] = useState(initialValue);
+  const [notifEnabled, setNotifEnabled] = useState(initialNotificationsEnabled);
+  const [savedNotifEnabled, setSavedNotifEnabled] = useState(initialNotificationsEnabled);
+  const [reminderDays, setReminderDays] = useState(initialReminderDays);
+  const [savedReminderDays, setSavedReminderDays] = useState(initialReminderDays);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(updatedAt);
   const [lastUpdatedBy, setLastUpdatedBy] = useState(updatedBy);
 
-  const isDirty = value !== saved;
+  const isDirty =
+    value !== saved ||
+    notifEnabled !== savedNotifEnabled ||
+    reminderDays !== savedReminderDays;
 
   async function handleSave() {
     setLoading(true);
@@ -36,7 +51,11 @@ export default function SettingsClient({ initialValue, updatedAt, updatedBy }: P
     const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ submissionWindowDays: value }),
+      body: JSON.stringify({
+        submissionWindowDays: value,
+        notificationsEnabled: notifEnabled,
+        reminderDaysBeforeClose: reminderDays,
+      }),
     });
 
     const data = await res.json();
@@ -47,6 +66,8 @@ export default function SettingsClient({ initialValue, updatedAt, updatedBy }: P
     }
 
     setSaved(value);
+    setSavedNotifEnabled(notifEnabled);
+    setSavedReminderDays(reminderDays);
     setLastUpdatedAt(data.updatedAt);
     setLastUpdatedBy(data.updatedBy);
     setSuccess(true);
@@ -175,6 +196,91 @@ export default function SettingsClient({ initialValue, updatedAt, updatedBy }: P
           </p>
         </div>
 
+      </div>
+
+      {/* Rappels par notification */}
+      <div className="bg-white rounded-xl border border-border p-6">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-primary-subtle flex items-center justify-center shrink-0">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} className="text-primary">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Rappels par notification</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Envoyez une notification push aux pasteurs qui n&apos;ont pas encore soumis leur rapport.
+            </p>
+          </div>
+        </div>
+
+        {/* Activer/désactiver */}
+        <div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-neutral-50 border border-border">
+          <div>
+            <p className="text-sm font-medium text-foreground">Activer les rappels</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Un rappel est envoyé automatiquement chaque jour au bon moment.
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={notifEnabled}
+            onClick={() => setNotifEnabled((v) => !v)}
+            className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 ${
+              notifEnabled ? "bg-primary" : "bg-neutral-300"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                notifEnabled ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Timing slider */}
+        {notifEnabled && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-foreground">Délai avant fermeture</label>
+              <span className="text-2xl font-bold text-primary tabular-nums">
+                {reminderDays}{" "}
+                <span className="text-base font-medium text-muted-foreground">
+                  jour{reminderDays > 1 ? "s" : ""} avant
+                </span>
+              </span>
+            </div>
+
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, value - 1)}
+              value={Math.min(reminderDays, Math.max(0, value - 1))}
+              onChange={(e) => setReminderDays(Number(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary bg-neutral-200"
+            />
+
+            <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
+              <span>Jour de fermeture</span>
+              <span>{Math.max(0, value - 1)} jour{value - 1 > 1 ? "s" : ""} avant</span>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-neutral-50 border border-border px-4 py-3 flex items-center gap-3">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-muted-foreground shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-muted-foreground">
+                {reminderDays === 0
+                  ? "Le rappel est envoyé le jour même de la fermeture."
+                  : `Le rappel est envoyé ${reminderDays} jour${reminderDays > 1 ? "s" : ""} avant la fermeture de la période.`}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Fin du formulaire — bouton unique */}
+      <div className="bg-white rounded-xl border border-border p-6">
         {/* Error / success */}
         {error && (
           <p className="mb-4 text-sm text-danger bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5">

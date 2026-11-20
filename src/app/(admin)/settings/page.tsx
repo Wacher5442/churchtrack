@@ -21,6 +21,8 @@ export default async function SettingsPage() {
       <div className="max-w-2xl">
         <SettingsClient
           initialValue={config?.submissionWindowDays ?? 6}
+          initialNotificationsEnabled={config?.notificationsEnabled ?? true}
+          initialReminderDays={config?.reminderDaysBeforeClose ?? 1}
           updatedAt={config?.updatedAt?.toISOString() ?? null}
           updatedBy={config?.updatedBy?.fullName ?? null}
         />

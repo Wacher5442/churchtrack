@@ -18,11 +18,13 @@ enum ReportStatus {
 }
 
 model AppConfig {
-  id                   Int       @id @default(1)
-  submissionWindowDays Int       @default(6) @map("submission_window_days")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
-  updatedById          BigInt?   @map("updated_by")
-  updatedBy            User?     @relation(fields: [updatedById], references: [id])
+  id                      Int       @id @default(1)
+  submissionWindowDays    Int       @default(6)   @map("submission_window_days")
+  notificationsEnabled    Boolean   @default(true) @map("notifications_enabled")
+  reminderDaysBeforeClose Int       @default(1)   @map("reminder_days_before_close")
+  updatedAt               DateTime  @updatedAt    @map("updated_at")
+  updatedById             BigInt?   @map("updated_by")
+  updatedBy               User?     @relation(fields: [updatedById], references: [id])
 
   @@map("app_config")
 }
@@ -43,6 +45,7 @@ model User {
   unlockedReports    WeeklyReport[] @relation("UnlockedBy")
   auditLogs          ReportAuditLog[]
   appConfigUpdates   AppConfig[]
+  pushSubscriptions  PushSubscription[]
 
   @@map("users")
 }
@@ -110,6 +113,20 @@ model WeeklyReport {
   @@index([churchId, weekStart])
   @@index([status])
   @@map("weekly_reports")
+}
+
+model PushSubscription {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String   @map("p256dh")
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model ReportAuditLog {

@@ -4,6 +4,7 @@ import { getCurrentPeriod } from "@/lib/period";
 import Link from "next/link";
 import ChurchReportCard from "./_components/ChurchReportCard";
 import PeriodBanner from "./_components/PeriodBanner";
+import NotificationButton from "./_components/NotificationButton";
 
 export const metadata = { title: "Tableau de bord — ChurchTrack" };
 
@@ -107,6 +108,9 @@ export default async function PastorDashboardPage() {
         closeDate={closeDate.toISOString()}
         windowDays={windowDays}
       />
+
+      {/* Rappels push */}
+      <NotificationButton vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? ""} />
 
       {/* Stats */}
       {assignments.length > 0 && (
