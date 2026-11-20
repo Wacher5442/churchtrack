@@ -207,13 +207,14 @@ export default function ReportsClient({
       </div>
 
       {/* Tableau */}
-      <div className="bg-white rounded-xl border border-border overflow-x-auto">
+      <div className="rounded-xl border border-border overflow-hidden">
         {rows.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
+          <div className="bg-white p-10 text-center text-sm text-muted-foreground">
             Aucune église active.
           </div>
         ) : (
-          <table className="w-full text-sm min-w-[750px]">
+          <div className="overflow-x-auto">
+          <table className="w-full bg-white text-sm min-w-[750px]">
             <thead>
               <tr className="border-b border-border bg-neutral-50">
                 <th className="w-8 px-4 py-3" />
@@ -390,6 +391,7 @@ export default function ReportsClient({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

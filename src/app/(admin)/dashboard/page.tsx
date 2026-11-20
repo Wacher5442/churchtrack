@@ -130,13 +130,14 @@ export default async function DashboardPage() {
               Gérer les églises →
             </Link>
           </div>
-          <div className="bg-white rounded-xl border border-border overflow-x-auto">
+          <div className="rounded-xl border border-border overflow-hidden">
             {churches.length === 0 ? (
-              <div className="p-10 text-center text-sm text-muted-foreground">
+              <div className="bg-white p-10 text-center text-sm text-muted-foreground">
                 Aucune église active.
               </div>
             ) : (
-              <table className="w-full text-sm min-w-[480px]">
+              <div className="overflow-x-auto">
+              <table className="w-full bg-white text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-b border-border bg-neutral-50">
                     <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Église</th>
@@ -180,6 +181,7 @@ export default async function DashboardPage() {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </div>
