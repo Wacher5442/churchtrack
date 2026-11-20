@@ -62,3 +62,70 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- Focus visible ---- */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* ---- Scrollbar discrète (Webkit) ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--neutral-300));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--neutral-500));
+}
+
+/* ---- Transitions globales cohérentes ---- */
+a,
+button {
+  transition-property: color, background-color, border-color, opacity, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* ---- Sélection de texte ---- */
+::selection {
+  background: hsl(var(--primary-light));
+  color: hsl(var(--primary-hover));
+}
+
+/* ---- Styles d'impression ---- */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  aside,
+  nav,
+  button,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .rounded-xl {
+    border-radius: 0 !important;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}

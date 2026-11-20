@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import PwaRegister from "@/components/PwaRegister";
 
 export const metadata: Metadata = {
   title: "ChurchTrack",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1f7a6e",
+  themeColor: "#168866",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -28,6 +29,7 @@ export default function RootLayout({
     <html lang="fr" className="h-full">
       <body className="min-h-full bg-background text-foreground antialiased">
         {children}
+        <PwaRegister />
       </body>
     </html>
   );

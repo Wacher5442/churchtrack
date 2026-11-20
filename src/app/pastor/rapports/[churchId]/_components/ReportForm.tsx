@@ -29,6 +29,7 @@ type Props = {
   weekLabel: string;
   periodOpen: boolean;
   closeDate: string;
+  isUnlockedPastWeek?: boolean;
   initialReport: Report | null;
   previousReport: Report | null;
 };
@@ -99,9 +100,11 @@ export default function ReportForm({
   churchId,
   churchName,
   location,
+  weekStart,
   weekLabel,
   periodOpen,
   closeDate,
+  isUnlockedPastWeek,
   initialReport,
   previousReport,
 }: Props) {
@@ -138,7 +141,7 @@ export default function ReportForm({
     const res = await fetch(`/api/reports/${churchId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...values, action }),
+      body: JSON.stringify({ ...values, action, weekStart }),
     });
 
     const data = await res.json();
@@ -172,15 +175,27 @@ export default function ReportForm({
           <span className="text-foreground font-medium">{churchName}</span>
         </div>
 
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{churchName}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">{churchName}</h1>
             {location && <p className="text-sm text-muted-foreground">{location}</p>}
-            <p className="text-sm text-muted-foreground mt-1">{weekLabel}</p>
+            <p className="text-sm text-muted-foreground mt-1 leading-snug">{weekLabel}</p>
           </div>
           <StatusBadge status={status} periodOpen={periodOpen} />
         </div>
       </div>
+
+      {/* Bannière semaine débloquée */}
+      {isUnlockedPastWeek && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-amber-600 shrink-0 mt-0.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+          </svg>
+          <p className="text-sm text-amber-800">
+            Cette semaine a été débloquée par l'administrateur. Vous pouvez compléter et soumettre ce rapport.
+          </p>
+        </div>
+      )}
 
       {/* Period banner */}
       {!periodOpen && (
@@ -211,18 +226,19 @@ export default function ReportForm({
           const prev = previousReport?.[key] ?? null;
           const variation = computeVariation(values[key], prev);
           return (
-          <div key={key} className="flex items-center gap-4 px-5 py-4">
-            <span className="text-muted-foreground shrink-0">{icon}</span>
+          <div key={key} className="flex items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-5 sm:py-4">
+            {/* Icône masquée sur mobile pour gagner de la place */}
+            <span className="hidden sm:block text-muted-foreground shrink-0">{icon}</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">{INDICATOR_LABELS[key]}</p>
               <VariationChip variation={variation} prevValue={prev} />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => step(key, -1)}
                 disabled={isReadOnly || values[key] === 0}
-                className="h-8 w-8 rounded-lg border border-border text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 text-lg leading-none flex items-center justify-center"
+                className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg border border-border text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 text-lg leading-none flex items-center justify-center"
               >
                 −
               </button>
@@ -232,7 +248,7 @@ export default function ReportForm({
                 value={values[key]}
                 onChange={(e) => set(key, e.target.value)}
                 readOnly={isReadOnly}
-                className={`w-16 rounded-lg border text-center text-base font-semibold tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary h-9 ${
+                className={`w-14 sm:w-16 rounded-lg border text-center text-base font-semibold tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary h-9 ${
                   isReadOnly
                     ? "border-transparent bg-neutral-50 text-foreground cursor-default"
                     : "border-border bg-white text-foreground"
@@ -242,7 +258,7 @@ export default function ReportForm({
                 type="button"
                 onClick={() => step(key, 1)}
                 disabled={isReadOnly}
-                className="h-8 w-8 rounded-lg border border-border text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 text-lg leading-none flex items-center justify-center"
+                className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg border border-border text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 text-lg leading-none flex items-center justify-center"
               >
                 +
               </button>
@@ -271,18 +287,18 @@ export default function ReportForm({
 
       {/* Actions */}
       {!isReadOnly && (
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => save("draft")}
             disabled={saving || submitting}
-            className="flex-1 h-11 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+            className="h-11 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-neutral-50 disabled:opacity-50 transition-colors sm:flex-1"
           >
             {saving ? "Enregistrement…" : "Enregistrer en brouillon"}
           </button>
           <button
             onClick={() => setShowConfirm(true)}
             disabled={saving || submitting}
-            className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 transition-colors"
+            className="h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 transition-colors sm:flex-1"
           >
             Soumettre le rapport
           </button>

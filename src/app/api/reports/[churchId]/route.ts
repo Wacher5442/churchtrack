@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { getCurrentPeriod } from "@/lib/period";
+import { getCurrentPeriod, getWeekEnd } from "@/lib/period";
 import { isPastorAssignedToChurch } from "@/lib/permissions";
 
 const reportSchema = z.object({
@@ -13,6 +13,8 @@ const reportSchema = z.object({
   tribeIntegration: z.number().int().min(0),
   servants: z.number().int().min(0),
   action: z.enum(["draft", "submit"]),
+  // Semaine cible — omis = semaine courante, fourni = semaine passée débloquée
+  weekStart: z.string().optional(),
 });
 
 type Params = { params: Promise<{ churchId: string }> };
@@ -38,9 +40,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     where: { churchId_weekStart: { churchId, weekStart } },
   });
 
-  if (!report) {
-    return NextResponse.json(null);
-  }
+  if (!report) return NextResponse.json(null);
 
   return NextResponse.json({
     id: report.id.toString(),
@@ -81,11 +81,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 
   const { attendance, newcomers, salvationDecisions, churchIntegration, tribeIntegration, servants, action } = parsed.data;
-  const { weekStart, weekEnd } = getCurrentPeriod();
 
-  // Check if already submitted
+  const { weekStart: currentWeekStart } = getCurrentPeriod();
+  const targetWeekStart = parsed.data.weekStart ? new Date(parsed.data.weekStart) : currentWeekStart;
+  const targetWeekEnd = getWeekEnd(targetWeekStart);
+  const isPastWeek = targetWeekStart < currentWeekStart;
+
   const existing = await db.weeklyReport.findUnique({
-    where: { churchId_weekStart: { churchId, weekStart } },
+    where: { churchId_weekStart: { churchId, weekStart: targetWeekStart } },
     select: { id: true, status: true, periodUnlockedAt: true },
   });
 
@@ -93,18 +96,22 @@ export async function PUT(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Ce rapport a déjà été soumis." }, { status: 409 });
   }
 
-  // Check period is open (unless unlocked)
-  const config = await db.appConfig.findUnique({ where: { id: 1 } });
-  const windowDays = config?.submissionWindowDays ?? 6;
-  const closeDate = new Date(weekStart);
-  closeDate.setDate(closeDate.getDate() + windowDays);
-  closeDate.setHours(23, 59, 59, 999);
-
   const isUnlocked = !!existing?.periodUnlockedAt;
-  const periodOpen = new Date() <= closeDate;
 
-  if (!periodOpen && !isUnlocked) {
-    return NextResponse.json({ error: "La période de saisie est fermée." }, { status: 403 });
+  if (isPastWeek && !isUnlocked) {
+    return NextResponse.json({ error: "Cette semaine n'est pas débloquée." }, { status: 403 });
+  }
+
+  if (!isPastWeek) {
+    const config = await db.appConfig.findUnique({ where: { id: 1 } });
+    const windowDays = config?.submissionWindowDays ?? 6;
+    const closeDate = new Date(currentWeekStart);
+    closeDate.setDate(closeDate.getDate() + windowDays);
+    closeDate.setHours(23, 59, 59, 999);
+    const periodOpen = new Date() <= closeDate;
+    if (!periodOpen && !isUnlocked) {
+      return NextResponse.json({ error: "La période de saisie est fermée." }, { status: 403 });
+    }
   }
 
   const isSubmit = action === "submit";
@@ -115,7 +122,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     churchIntegration,
     tribeIntegration,
     servants,
-    weekEnd,
+    weekEnd: targetWeekEnd,
     ...(isSubmit && {
       status: "SUBMITTED" as const,
       submittedById: pastorId,
@@ -124,8 +131,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
   };
 
   const report = await db.weeklyReport.upsert({
-    where: { churchId_weekStart: { churchId, weekStart } },
-    create: { churchId, weekStart, ...data },
+    where: { churchId_weekStart: { churchId, weekStart: targetWeekStart } },
+    create: { churchId, weekStart: targetWeekStart, ...data },
     update: data,
   });
 

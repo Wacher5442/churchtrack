@@ -88,7 +88,7 @@ export default async function RapportsPage() {
   const weeks = [...grouped.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="px-4 py-5 sm:p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Mes rapports</h1>
@@ -154,6 +154,7 @@ export default async function RapportsPage() {
                       churchId={r.churchId.toString()}
                       churchName={church?.name ?? "—"}
                       isPrimary={church?.isPrimary ?? false}
+                      weekKey={weekKey}
                       report={{
                         attendance: r.attendance,
                         newcomers: r.newcomers,
@@ -163,6 +164,7 @@ export default async function RapportsPage() {
                         servants: r.servants,
                         status: r.status,
                         submittedAt: r.submittedAt?.toISOString() ?? null,
+                        periodUnlockedAt: r.periodUnlockedAt?.toISOString() ?? null,
                       }}
                       isCurrentWeek={isCurrentWeek}
                       periodOpen={periodOpen}
@@ -204,7 +206,23 @@ function WeekSection({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-3 mb-3">
+      {/* Mobile: simple row with border-bottom */}
+      <div className="sm:hidden flex items-start justify-between gap-2 pb-2.5 mb-3 border-b border-border">
+        <div className="min-w-0">
+          {isCurrentWeek && (
+            <span className="inline-flex mb-1 text-[11px] font-semibold text-primary bg-primary-subtle border border-primary/20 rounded-full px-2 py-0.5">
+              Semaine actuelle
+            </span>
+          )}
+          <p className="text-sm font-semibold text-foreground leading-snug">{label}</p>
+        </div>
+        <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap pt-0.5">
+          {submittedCount}/{totalCount} soumis
+        </span>
+      </div>
+
+      {/* Desktop: séparateurs horizontaux */}
+      <div className="hidden sm:flex items-center gap-3 mb-3">
         <div className="flex-1 h-px bg-border" />
         <div className="flex items-center gap-2 shrink-0">
           {isCurrentWeek && (
@@ -219,6 +237,7 @@ function WeekSection({
         </div>
         <div className="flex-1 h-px bg-border" />
       </div>
+
       <div className="space-y-3">{children}</div>
     </div>
   );
@@ -228,6 +247,7 @@ function ReportCard({
   churchId,
   churchName,
   isPrimary,
+  weekKey,
   report,
   isCurrentWeek,
   periodOpen,
@@ -236,6 +256,7 @@ function ReportCard({
   churchId: string;
   churchName: string;
   isPrimary: boolean;
+  weekKey: string;
   report: {
     attendance: number;
     newcomers: number;
@@ -245,6 +266,7 @@ function ReportCard({
     servants: number;
     status: string;
     submittedAt: string | null;
+    periodUnlockedAt: string | null;
   };
   isCurrentWeek: boolean;
   periodOpen: boolean;
@@ -252,7 +274,9 @@ function ReportCard({
 }) {
   const isSubmitted = report.status === "SUBMITTED";
   const isDraft = report.status === "DRAFT";
-  const canEdit = isCurrentWeek && periodOpen && !isSubmitted;
+  const isUnlocked = !!report.periodUnlockedAt;
+  const canEdit = !isSubmitted && ((isCurrentWeek && periodOpen) || (!isCurrentWeek && isUnlocked));
+  const editHref = `/pastor/rapports/${churchId}${!isCurrentWeek && isUnlocked ? `?week=${weekKey}` : ""}`;
 
   return (
     <div className="rounded-xl border border-border bg-white p-5">
@@ -315,7 +339,7 @@ function ReportCard({
 
         {canEdit && (
           <Link
-            href={`/pastor/rapports/${churchId}`}
+            href={editHref}
             className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
           >
             {isDraft ? "Continuer" : "Saisir"}
@@ -339,30 +363,34 @@ function PendingCard({
   isPrimary: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-white p-5 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-2">
-        <span className="font-semibold text-foreground text-sm">{churchName}</span>
-        {isPrimary ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            Principal
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-            Délégué
-          </span>
-        )}
-        <span className="text-xs text-muted-foreground">· Rapport non commencé</span>
+    <div className="rounded-xl border border-dashed border-border bg-white p-4 sm:p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-foreground text-sm">{churchName}</span>
+          {isPrimary ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Principal
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              Délégué
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between sm:justify-end gap-3">
+          <span className="text-xs text-muted-foreground sm:hidden">Rapport non commencé</span>
+          <Link
+            href={`/pastor/rapports/${churchId}`}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
+          >
+            Saisir
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </div>
-      <Link
-        href={`/pastor/rapports/${churchId}`}
-        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
-      >
-        Saisir
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </Link>
     </div>
   );
 }

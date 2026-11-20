@@ -11,6 +11,7 @@ export default async function ChangePasswordPage() {
   if (!session.user.mustChangePassword) redirect("/");
 
   return (
+    <div className="min-h-screen bg-primary-subtle flex items-center justify-center p-4">
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
@@ -53,6 +54,7 @@ export default async function ChangePasswordPage() {
 
         <ChangePasswordForm />
       </div>
+    </div>
     </div>
   );
 }

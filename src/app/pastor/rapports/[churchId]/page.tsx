@@ -1,11 +1,14 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { getCurrentPeriod } from "@/lib/period";
+import { getCurrentPeriod, getWeekEnd } from "@/lib/period";
 import { isPastorAssignedToChurch } from "@/lib/permissions";
 import ReportForm from "./_components/ReportForm";
 
-type Params = { params: Promise<{ churchId: string }> };
+type Params = {
+  params: Promise<{ churchId: string }>;
+  searchParams: Promise<{ week?: string }>;
+};
 
 export async function generateMetadata({ params }: Params) {
   const { churchId } = await params;
@@ -16,9 +19,10 @@ export async function generateMetadata({ params }: Params) {
   return { title: `${church?.name ?? "Rapport"} — ChurchTrack` };
 }
 
-export default async function ReportPage({ params }: Params) {
+export default async function ReportPage({ params, searchParams }: Params) {
   const session = await auth();
   const { churchId: churchIdStr } = await params;
+  const { week } = await searchParams;
 
   const pastorId = BigInt(session!.user.id!);
   const churchId = BigInt(churchIdStr);
@@ -34,12 +38,30 @@ export default async function ReportPage({ params }: Params) {
 
   if (!hasAccess || !church) redirect("/pastor/dashboard");
 
-  const { weekStart, weekEnd } = getCurrentPeriod();
+  const { weekStart: currentWeekStart, weekEnd: currentWeekEnd } = getCurrentPeriod();
   const windowDays = config?.submissionWindowDays ?? 6;
-  const closeDate = new Date(weekStart);
+
+  // Semaine cible : courante par défaut, ou semaine passée débloquée via ?week=
+  const isUnlockedPastWeek = !!week;
+  const weekStart = isUnlockedPastWeek ? new Date(week!) : currentWeekStart;
+  const weekEnd = isUnlockedPastWeek ? getWeekEnd(weekStart) : currentWeekEnd;
+
+  // Sécurité : pour une semaine passée, vérifier que le rapport est bien débloqué
+  if (isUnlockedPastWeek) {
+    const unlockedReport = await db.weeklyReport.findUnique({
+      where: { churchId_weekStart: { churchId, weekStart } },
+      select: { periodUnlockedAt: true, status: true },
+    });
+    if (!unlockedReport?.periodUnlockedAt || unlockedReport.status === "SUBMITTED") {
+      redirect("/pastor/dashboard");
+    }
+  }
+
+  // Période ouverte : toujours vraie pour une semaine débloquée
+  const closeDate = new Date(currentWeekStart);
   closeDate.setDate(closeDate.getDate() + windowDays);
   closeDate.setHours(23, 59, 59, 999);
-  const periodOpen = new Date() <= closeDate;
+  const periodOpen = isUnlockedPastWeek ? true : new Date() <= closeDate;
 
   const prevWeekStart = new Date(weekStart);
   prevWeekStart.setDate(prevWeekStart.getDate() - 7);
@@ -69,7 +91,7 @@ export default async function ReportPage({ params }: Params) {
     d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="px-4 py-5 sm:p-6 lg:p-8">
       <ReportForm
         churchId={churchIdStr}
         churchName={church.name}
@@ -79,6 +101,7 @@ export default async function ReportPage({ params }: Params) {
         weekLabel={`Semaine du ${fmtDate(weekStart)} au ${fmtDate(weekEnd)}`}
         periodOpen={periodOpen}
         closeDate={closeDate.toISOString()}
+        isUnlockedPastWeek={isUnlockedPastWeek}
         initialReport={toReportData(existing)}
         previousReport={toReportData(previous)}
       />
