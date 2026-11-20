@@ -207,26 +207,25 @@ export default function ReportsClient({
       </div>
 
       {/* Tableau */}
-      <div className="rounded-xl border border-border overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         {rows.length === 0 ? (
-          <div className="bg-white p-10 text-center text-sm text-muted-foreground">
+          <div className="p-10 text-center text-sm text-muted-foreground">
             Aucune église active.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full bg-white text-sm min-w-[750px]">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-neutral-50">
                 <th className="w-8 px-4 py-3" />
                 <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Église</th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground hidden md:table-cell">
                   Pasteur principal
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Statut</th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground hidden sm:table-cell">
                   Présences
                 </th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground hidden lg:table-cell">
                   Soumis par
                 </th>
                 <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
@@ -272,7 +271,7 @@ export default function ReportsClient({
                         )}
                       </td>
                       <td className="px-4 py-3.5 font-semibold text-foreground">{row.churchName}</td>
-                      <td className="px-4 py-3.5 text-muted-foreground">
+                      <td className="px-4 py-3.5 text-muted-foreground hidden md:table-cell">
                         {row.primaryPastor ?? (
                           <span className="text-neutral-300">Non affecté</span>
                         )}
@@ -283,7 +282,7 @@ export default function ReportsClient({
                           isUnlocked={r?.isUnlocked ?? false}
                         />
                       </td>
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="px-4 py-3.5 text-right hidden sm:table-cell">
                         {r?.status === "SUBMITTED" ? (
                           <div className="flex flex-col items-end gap-0.5">
                             <span className="font-semibold text-foreground tabular-nums">
@@ -299,7 +298,7 @@ export default function ReportsClient({
                           <span className="text-neutral-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 hidden lg:table-cell">
                         {r?.status === "SUBMITTED" ? (
                           <div>
                             <p className="text-xs font-medium text-foreground">
@@ -391,7 +390,6 @@ export default function ReportsClient({
               })}
             </tbody>
           </table>
-          </div>
         )}
       </div>
     </div>
