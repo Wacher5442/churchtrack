@@ -130,19 +130,19 @@ export default async function DashboardPage() {
               Gérer les églises →
             </Link>
           </div>
-          <div className="bg-white rounded-xl border border-border overflow-hidden">
+          <div className="bg-white rounded-xl border border-border overflow-x-auto">
             {churches.length === 0 ? (
               <div className="p-10 text-center text-sm text-muted-foreground">
                 Aucune église active.
               </div>
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-b border-border bg-neutral-50">
                     <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Église</th>
-                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground hidden sm:table-cell">Pasteur principal</th>
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Pasteur principal</th>
                     <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Statut</th>
-                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground hidden sm:table-cell">Présences</th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Présences</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -157,13 +157,13 @@ export default async function DashboardPage() {
                     return (
                       <tr key={church.id.toString()} className="hover:bg-neutral-50/60 transition-colors">
                         <td className="px-4 py-3.5 font-medium text-foreground">{church.name}</td>
-                        <td className="px-4 py-3.5 text-muted-foreground hidden sm:table-cell">
+                        <td className="px-4 py-3.5 text-muted-foreground">
                           {primaryPastor ?? <span className="text-neutral-300">Non affecté</span>}
                         </td>
                         <td className="px-4 py-3.5">
                           <ReportStatusBadge status={report?.status ?? null} />
                         </td>
-                        <td className="px-4 py-3.5 text-right hidden sm:table-cell">
+                        <td className="px-4 py-3.5 text-right">
                           {report?.status === "SUBMITTED" ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="font-semibold text-foreground tabular-nums">
