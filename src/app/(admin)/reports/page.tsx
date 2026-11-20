@@ -47,7 +47,10 @@ export default async function ReportsPage({
   closeDate.setHours(23, 59, 59, 999);
   const periodOpen = new Date() <= closeDate;
 
-  const [churches, reports] = await Promise.all([
+  const prevWeekStart = new Date(selectedWeekStart);
+  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+
+  const [churches, reports, prevWeekReports] = await Promise.all([
     db.church.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
@@ -64,7 +67,35 @@ export default async function ReportsPage({
         submittedBy: { select: { fullName: true } },
       },
     }),
+    db.weeklyReport.findMany({
+      where: { weekStart: prevWeekStart, status: "SUBMITTED" },
+      select: {
+        churchId: true,
+        attendance: true,
+        newcomers: true,
+        salvationDecisions: true,
+        churchIntegration: true,
+        tribeIntegration: true,
+        servants: true,
+      },
+    }),
   ]);
+
+  type PrevValues = {
+    attendance: number; newcomers: number; salvationDecisions: number;
+    churchIntegration: number; tribeIntegration: number; servants: number;
+  };
+  const prevReportMap: Record<string, PrevValues> = {};
+  for (const r of prevWeekReports) {
+    prevReportMap[r.churchId.toString()] = {
+      attendance: r.attendance,
+      newcomers: r.newcomers,
+      salvationDecisions: r.salvationDecisions,
+      churchIntegration: r.churchIntegration,
+      tribeIntegration: r.tribeIntegration,
+      servants: r.servants,
+    };
+  }
 
   const reportMap = new Map(
     reports.map((r) => [r.churchId.toString(), r])
@@ -116,6 +147,7 @@ export default async function ReportsPage({
         availableWeeks={availableWeeks}
         submittedCount={submittedCount}
         totalCount={churches.length}
+        prevReportMap={prevReportMap}
       />
     </div>
   );

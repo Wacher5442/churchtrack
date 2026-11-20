@@ -2,6 +2,7 @@
 
 import { Fragment, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import DiffBadge from "@/components/ui/DiffBadge";
 
 export type ReportRow = {
   churchId: string;
@@ -23,6 +24,11 @@ export type ReportRow = {
 };
 
 type Week = { label: string; value: string };
+
+type PrevValues = {
+  attendance: number; newcomers: number; salvationDecisions: number;
+  churchIntegration: number; tribeIntegration: number; servants: number;
+};
 
 const INDICATORS = [
   { key: "attendance", label: "Présences" },
@@ -73,6 +79,7 @@ export default function ReportsClient({
   availableWeeks,
   submittedCount,
   totalCount,
+  prevReportMap = {},
 }: {
   rows: ReportRow[];
   selectedWeek: string;
@@ -80,6 +87,7 @@ export default function ReportsClient({
   availableWeeks: Week[];
   submittedCount: number;
   totalCount: number;
+  prevReportMap?: Record<string, PrevValues>;
 }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -159,7 +167,7 @@ export default function ReportsClient({
           <select
             value={selectedWeek}
             onChange={(e) => navigate(e.target.value)}
-            className="text-sm font-semibold border border-border rounded-lg px-3 py-2 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="flex-1 min-w-0 text-sm font-semibold border border-border rounded-lg px-3 py-2 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             {availableWeeks.map((w) => (
               <option key={w.value} value={w.value}>
@@ -274,11 +282,18 @@ export default function ReportsClient({
                           isUnlocked={r?.isUnlocked ?? false}
                         />
                       </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground hidden sm:table-cell">
+                      <td className="px-4 py-3.5 text-right hidden sm:table-cell">
                         {r?.status === "SUBMITTED" ? (
-                          <span className="font-semibold text-foreground">
-                            {r.attendance.toLocaleString("fr-FR")}
-                          </span>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className="font-semibold text-foreground tabular-nums">
+                              {r.attendance.toLocaleString("fr-FR")}
+                            </span>
+                            <DiffBadge
+                              diff={prevReportMap[row.churchId] != null
+                                ? r.attendance - prevReportMap[row.churchId].attendance
+                                : null}
+                            />
+                          </div>
                         ) : (
                           <span className="text-neutral-300">—</span>
                         )}
@@ -345,17 +360,27 @@ export default function ReportsClient({
                       <tr className="border-t border-border bg-neutral-50/40">
                         <td colSpan={7} className="px-6 py-4">
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                            {INDICATORS.map((ind) => (
-                              <div
-                                key={ind.key}
-                                className="rounded-lg border border-border bg-white px-3 py-2.5 text-center"
-                              >
-                                <p className="text-xs text-muted-foreground mb-1">{ind.label}</p>
-                                <p className="text-xl font-bold text-foreground tabular-nums">
-                                  {(r[ind.key as keyof typeof r] as number).toLocaleString("fr-FR")}
-                                </p>
-                              </div>
-                            ))}
+                            {INDICATORS.map((ind) => {
+                              const val = r[ind.key as keyof typeof r] as number;
+                              const prev = prevReportMap[row.churchId];
+                              const diff = prev != null
+                                ? val - (prev[ind.key as keyof PrevValues] as number)
+                                : null;
+                              return (
+                                <div
+                                  key={ind.key}
+                                  className="rounded-lg border border-border bg-white px-3 py-2.5 text-center"
+                                >
+                                  <p className="text-xs text-muted-foreground mb-1">{ind.label}</p>
+                                  <p className="text-xl font-bold text-foreground tabular-nums">
+                                    {val.toLocaleString("fr-FR")}
+                                  </p>
+                                  <div className="mt-0.5 flex justify-center">
+                                    <DiffBadge diff={diff} />
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </td>
                       </tr>

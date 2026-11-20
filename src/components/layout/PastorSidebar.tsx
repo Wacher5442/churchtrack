@@ -60,11 +60,7 @@ export default function PastorSidebar({ userName }: Props) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 h-16 border-b border-neutral-200">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <svg width="18" height="18" viewBox="0 0 28 28" fill="none">
-            <path d="M14 3L4 9v16h7v-7h6v7h7V9L14 3z" fill="white" fillOpacity="0.9" />
-          </svg>
-        </div>
+        <img src="/church.png" alt="ChurchTrack" width={32} height={32} className="shrink-0" />
         <span className="font-bold text-neutral-900 text-sm">ChurchTrack</span>
       </div>
 
@@ -112,11 +108,7 @@ export default function PastorSidebar({ userName }: Props) {
           </svg>
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-            <svg width="13" height="13" viewBox="0 0 28 28" fill="none">
-              <path d="M14 3L4 9v16h7v-7h6v7h7V9L14 3z" fill="white" fillOpacity="0.9" />
-            </svg>
-          </div>
+          <img src="/church.png" alt="ChurchTrack" width={24} height={24} />
           <span className="font-bold text-sm text-neutral-900">ChurchTrack</span>
         </div>
       </div>

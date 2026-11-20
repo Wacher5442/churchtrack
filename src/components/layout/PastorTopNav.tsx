@@ -39,11 +39,7 @@ export default function PastorTopNav({ userName }: Props) {
     <header className="shrink-0 h-14 bg-white border-b border-neutral-200 flex items-center px-4 lg:px-8 sm:fixed sm:top-0 sm:left-0 sm:right-0 sm:z-30">
       {/* Logo */}
       <Link href="/pastor/dashboard" className="flex items-center gap-2.5 mr-8 shrink-0">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 28 28" fill="none">
-            <path d="M14 3L4 9v16h7v-7h6v7h7V9L14 3z" fill="white" fillOpacity="0.9" />
-          </svg>
-        </div>
+        <img src="/church.png" alt="ChurchTrack" width={28} height={28} />
         <span className="font-bold text-sm text-neutral-900">ChurchTrack</span>
       </Link>
 

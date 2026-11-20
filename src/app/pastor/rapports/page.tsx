@@ -2,7 +2,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { getCurrentPeriod } from "@/lib/period";
 import Link from "next/link";
-import { INDICATOR_LABELS, type IndicatorKey } from "@/lib/variations";
+import { type IndicatorKey } from "@/lib/variations";
+import DiffBadge from "@/components/ui/DiffBadge";
 
 export const metadata = { title: "Mes rapports — ChurchTrack" };
 
@@ -76,19 +77,44 @@ export default async function RapportsPage() {
     (a) => !currentChurchesWithReport.has(a.churchId.toString())
   );
 
-  const fmtPeriod = (start: Date, end: Date) => {
-    const s = start.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-    const e = end.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-    return `Semaine du ${s} au ${e}`;
+  // Pour chaque rapport, calculer les valeurs du rapport soumis précédent de la même église.
+  // Les rapports sont triés weekStart DESC — on parcourt du plus ancien au plus récent.
+  type PrevValues = {
+    attendance: number; newcomers: number; salvationDecisions: number;
+    churchIntegration: number; tribeIntegration: number; servants: number;
   };
+  const prevByReportId = new Map<string, PrevValues>();
+  const lastSubmittedByChurch = new Map<string, typeof reports[0]>();
 
-  const fmtShort = (n: number | null) =>
-    n === null ? "—" : n.toLocaleString("fr-FR");
+  for (let i = reports.length - 1; i >= 0; i--) {
+    const r = reports[i];
+    const key = r.churchId.toString();
+    const prev = lastSubmittedByChurch.get(key);
+    if (prev) {
+      prevByReportId.set(r.id.toString(), {
+        attendance: prev.attendance,
+        newcomers: prev.newcomers,
+        salvationDecisions: prev.salvationDecisions,
+        churchIntegration: prev.churchIntegration,
+        tribeIntegration: prev.tribeIntegration,
+        servants: prev.servants,
+      });
+    }
+    if (r.status === "SUBMITTED") {
+      lastSubmittedByChurch.set(key, r);
+    }
+  }
+
+  const fmtPeriod = (start: Date, end: Date) => {
+    const s = start.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    const e = end.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    return `${s} – ${e}`;
+  };
 
   const weeks = [...grouped.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 
   return (
-    <div className="px-4 py-5 sm:p-6 lg:p-8">
+    <div className="p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Mes rapports</h1>
@@ -113,7 +139,7 @@ export default async function RapportsPage() {
           Aucun rapport trouvé.
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Current week — churches with no report yet */}
           {periodOpen && churchesWithNoCurrentReport.length > 0 && !grouped.has(currentWeekKey) && (
             <WeekSection
@@ -166,9 +192,9 @@ export default async function RapportsPage() {
                         submittedAt: r.submittedAt?.toISOString() ?? null,
                         periodUnlockedAt: r.periodUnlockedAt?.toISOString() ?? null,
                       }}
+                      prevValues={prevByReportId.get(r.id.toString()) ?? null}
                       isCurrentWeek={isCurrentWeek}
                       periodOpen={periodOpen}
-                      fmtShort={fmtShort}
                     />
                   );
                 })}
@@ -191,6 +217,15 @@ export default async function RapportsPage() {
   );
 }
 
+const SHORT_LABELS: Record<IndicatorKey, string> = {
+  attendance: "Présences",
+  newcomers: "Nouveaux",
+  salvationDecisions: "Décisions",
+  churchIntegration: "Int. Église",
+  tribeIntegration: "Int. Tribus",
+  servants: "Serviteurs",
+};
+
 function WeekSection({
   label,
   isCurrentWeek,
@@ -206,42 +241,30 @@ function WeekSection({
 }) {
   return (
     <div>
-      {/* Mobile: simple row with border-bottom */}
-      <div className="sm:hidden flex items-start justify-between gap-2 pb-2.5 mb-3 border-b border-border">
-        <div className="min-w-0">
-          {isCurrentWeek && (
-            <span className="inline-flex mb-1 text-[11px] font-semibold text-primary bg-primary-subtle border border-primary/20 rounded-full px-2 py-0.5">
-              Semaine actuelle
-            </span>
-          )}
-          <p className="text-sm font-semibold text-foreground leading-snug">{label}</p>
-        </div>
-        <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap pt-0.5">
-          {submittedCount}/{totalCount} soumis
-        </span>
-      </div>
-
-      {/* Desktop: séparateurs horizontaux */}
-      <div className="hidden sm:flex items-center gap-3 mb-3">
-        <div className="flex-1 h-px bg-border" />
+      <div className="flex items-center gap-3 mb-3">
+        <div className="h-px flex-1 bg-border" />
         <div className="flex items-center gap-2 shrink-0">
           {isCurrentWeek && (
-            <span className="text-xs font-semibold text-primary bg-primary-subtle border border-primary/20 rounded-full px-2 py-0.5">
-              Semaine actuelle
+            <span className="text-[11px] font-semibold text-primary bg-primary-subtle border border-primary/20 rounded-full px-2 py-0.5">
+              Actuelle
             </span>
           )}
-          <span className="text-sm font-semibold text-foreground">{label}</span>
+          <span className="text-xs font-semibold text-foreground">{label}</span>
           <span className="text-xs text-muted-foreground">
-            {submittedCount}/{totalCount} soumis
+            {submittedCount}/{totalCount}
           </span>
         </div>
-        <div className="flex-1 h-px bg-border" />
+        <div className="h-px flex-1 bg-border" />
       </div>
-
       <div className="space-y-3">{children}</div>
     </div>
   );
 }
+
+type PrevValues = {
+  attendance: number; newcomers: number; salvationDecisions: number;
+  churchIntegration: number; tribeIntegration: number; servants: number;
+};
 
 function ReportCard({
   churchId,
@@ -249,9 +272,9 @@ function ReportCard({
   isPrimary,
   weekKey,
   report,
+  prevValues,
   isCurrentWeek,
   periodOpen,
-  fmtShort,
 }: {
   churchId: string;
   churchName: string;
@@ -268,9 +291,9 @@ function ReportCard({
     submittedAt: string | null;
     periodUnlockedAt: string | null;
   };
+  prevValues: PrevValues | null;
   isCurrentWeek: boolean;
   periodOpen: boolean;
-  fmtShort: (n: number | null) => string;
 }) {
   const isSubmitted = report.status === "SUBMITTED";
   const isDraft = report.status === "DRAFT";
@@ -278,71 +301,85 @@ function ReportCard({
   const canEdit = !isSubmitted && ((isCurrentWeek && periodOpen) || (!isCurrentWeek && isUnlocked));
   const editHref = `/pastor/rapports/${churchId}${!isCurrentWeek && isUnlocked ? `?week=${weekKey}` : ""}`;
 
+  // Bordures internes de la grille 3-col mobile / 6-col desktop
+  const cellBorder = (i: number) => {
+    if (i === 0) return "";
+    if (i === 1 || i === 2) return "border-l border-border";
+    if (i === 3) return "border-t border-border sm:border-t-0 sm:border-l";
+    return "border-l border-t border-border sm:border-t-0"; // i = 4, 5
+  };
+
   return (
-    <div className="rounded-xl border border-border bg-white p-5">
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-foreground text-sm">{churchName}</span>
+    <div className="bg-white rounded-xl border border-border overflow-hidden">
+      {/* En-tête */}
+      <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-semibold text-foreground text-sm truncate">{churchName}</span>
           {isPrimary ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Principal
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-primary shrink-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />Principal
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
               Délégué
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {isSubmitted ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-success">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
-              Soumis
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-              Brouillon
-            </span>
-          )}
+        {isSubmitted ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-success shrink-0">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />Soumis
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 shrink-0">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />Brouillon
+          </span>
+        )}
+      </div>
+
+      {/* Grille indicateurs */}
+      <div className="border-t border-border">
+        <div className="grid grid-cols-3 sm:grid-cols-6">
+          {INDICATORS.map((key, i) => {
+            const val = report[key as keyof typeof report] as number;
+            const diff = prevValues != null
+              ? val - (prevValues[key as keyof PrevValues] as number)
+              : null;
+            return (
+              <div key={key} className={`py-3.5 px-1 text-center ${cellBorder(i)}`}>
+                <p className="text-base font-bold text-foreground tabular-nums leading-none">
+                  {val.toLocaleString("fr-FR")}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                  {SHORT_LABELS[key]}
+                </p>
+                {diff !== null && (
+                  <div className="mt-0.5 flex items-center justify-center">
+                    <DiffBadge diff={diff} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Indicators grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-        {INDICATORS.map((key) => (
-          <div key={key} className="rounded-lg bg-neutral-50 border border-border px-3 py-2">
-            <p className="text-xs text-muted-foreground mb-0.5 truncate">
-              {INDICATOR_LABELS[key]}
-            </p>
-            <p className="text-lg font-bold text-foreground tabular-nums">
-              {fmtShort(report[key as keyof typeof report] as number)}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        {isSubmitted && report.submittedAt && (
-          <p className="text-xs text-muted-foreground">
-            Soumis le{" "}
-            {new Date(report.submittedAt).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-        )}
-        {isDraft && <p className="text-xs text-muted-foreground">Brouillon non soumis</p>}
-
+      {/* Pied */}
+      <div className="border-t border-border px-4 py-2.5 flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          {isSubmitted && report.submittedAt
+            ? `Soumis le ${new Date(report.submittedAt).toLocaleDateString("fr-FR", {
+                day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+              })}`
+            : isDraft
+            ? "Brouillon non soumis"
+            : ""}
+        </p>
         {canEdit && (
           <Link
             href={editHref}
-            className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
           >
-            {isDraft ? "Continuer" : "Saisir"}
+            {isDraft ? "Continuer" : "Modifier"}
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
@@ -363,34 +400,29 @@ function PendingCard({
   isPrimary: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-white p-4 sm:p-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-foreground text-sm">{churchName}</span>
-          {isPrimary ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Principal
-            </span>
-          ) : (
-            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              Délégué
-            </span>
-          )}
-        </div>
-        <div className="flex items-center justify-between sm:justify-end gap-3">
-          <span className="text-xs text-muted-foreground sm:hidden">Rapport non commencé</span>
-          <Link
-            href={`/pastor/rapports/${churchId}`}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
-          >
-            Saisir
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
+    <div className="rounded-xl border border-dashed border-neutral-300 bg-white px-4 py-3.5 flex items-center gap-3">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className="font-semibold text-foreground text-sm truncate">{churchName}</span>
+        {isPrimary ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-primary shrink-0">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />Principal
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
+            Délégué
+          </span>
+        )}
       </div>
+      <span className="hidden sm:block text-xs text-muted-foreground shrink-0">Non commencé</span>
+      <Link
+        href={`/pastor/rapports/${churchId}`}
+        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
+      >
+        Saisir
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
     </div>
   );
 }

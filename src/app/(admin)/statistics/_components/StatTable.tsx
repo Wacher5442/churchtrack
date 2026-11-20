@@ -164,8 +164,8 @@ export default function StatTable({
           <h2 className="text-base font-semibold text-foreground mb-3">
             Classement par église
           </h2>
-          <div className="bg-white rounded-xl border border-border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-xl border border-border overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-neutral-50">
                   <th className="text-left px-4 py-3 font-semibold text-muted-foreground">

@@ -87,7 +87,7 @@ export default async function PastorDashboardPage() {
   const hasTrends = [...trendByChurch.values()].some((pts) => pts.length >= 2);
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl mx-auto">
+    <div className="p-6 lg:p-8">
       {/* En-tête */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">

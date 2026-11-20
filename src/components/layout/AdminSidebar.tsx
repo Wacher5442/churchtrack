@@ -17,19 +17,10 @@ const NAV = [
   },
   {
     href: "/churches",
-    label: "Églises",
+    label: "Organisation",
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
-  },
-  {
-    href: "/pastors",
-    label: "Pasteurs",
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
   },
@@ -107,11 +98,7 @@ export default function AdminSidebar({ userName }: Props) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-neutral-200">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <svg width="18" height="18" viewBox="0 0 28 28" fill="none">
-            <path d="M14 3L4 9v16h7v-7h6v7h7V9L14 3z" fill="white" fillOpacity="0.9" />
-          </svg>
-        </div>
+        <img src="/church.png" alt="ChurchTrack" width={32} height={32} className="shrink-0" />
         <span className="font-bold text-neutral-900 text-sm">ChurchTrack</span>
       </div>
 
@@ -162,11 +149,7 @@ export default function AdminSidebar({ userName }: Props) {
           </svg>
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-            <svg width="13" height="13" viewBox="0 0 28 28" fill="none">
-              <path d="M14 3L4 9v16h7v-7h6v7h7V9L14 3z" fill="white" fillOpacity="0.9" />
-            </svg>
-          </div>
+          <img src="/church.png" alt="ChurchTrack" width={24} height={24} />
           <span className="font-bold text-sm text-neutral-900">ChurchTrack</span>
         </div>
       </div>

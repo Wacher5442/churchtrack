@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getCurrentPeriod } from "@/lib/period";
 import Link from "next/link";
+import DiffBadge from "@/components/ui/DiffBadge";
 
 export const metadata = { title: "Tableau de bord — ChurchTrack" };
 
@@ -147,6 +148,11 @@ export default async function DashboardPage() {
                 <tbody className="divide-y divide-border">
                   {churches.map((church) => {
                     const report = reportMap.get(church.id.toString());
+                    const prevReport = prevReportMap.get(church.id.toString());
+                    const attendanceDiff =
+                      report?.status === "SUBMITTED" && prevReport != null
+                        ? report.attendance - prevReport.attendance
+                        : null;
                     const primaryPastor = church.pastors[0]?.pastor?.fullName;
                     return (
                       <tr key={church.id.toString()} className="hover:bg-neutral-50/60 transition-colors">
@@ -157,10 +163,17 @@ export default async function DashboardPage() {
                         <td className="px-4 py-3.5">
                           <ReportStatusBadge status={report?.status ?? null} />
                         </td>
-                        <td className="px-4 py-3.5 text-right text-muted-foreground tabular-nums hidden sm:table-cell">
-                          {report?.status === "SUBMITTED"
-                            ? report.attendance.toLocaleString("fr-FR")
-                            : <span className="text-neutral-300">—</span>}
+                        <td className="px-4 py-3.5 text-right hidden sm:table-cell">
+                          {report?.status === "SUBMITTED" ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="font-semibold text-foreground tabular-nums">
+                                {report.attendance.toLocaleString("fr-FR")}
+                              </span>
+                              <DiffBadge diff={attendanceDiff} />
+                            </div>
+                          ) : (
+                            <span className="text-neutral-300">—</span>
+                          )}
                         </td>
                       </tr>
                     );

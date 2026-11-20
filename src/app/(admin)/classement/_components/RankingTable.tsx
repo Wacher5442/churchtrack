@@ -1,5 +1,7 @@
 "use client";
 
+import DiffBadge from "@/components/ui/DiffBadge";
+
 export type ChurchRank = {
   churchId: string;
   name: string;
@@ -11,6 +13,8 @@ export type ChurchRank = {
   submittedWeeks: number;
   consistencyPct: number;
   trend: number | null; // % vs période précédente, null si pas de données précédentes
+  newcomersDiff: number | null;
+  decisionsDiff: number | null;
   sortValue: number;
 };
 
@@ -143,11 +147,17 @@ export default function RankingTable({
                 <td className={`px-4 py-3.5 text-right tabular-nums ${sortKey === "avg" ? "font-bold text-foreground" : "text-muted-foreground"}`}>
                   {r.avgAttendance.toLocaleString("fr-FR")}
                 </td>
-                <td className={`px-4 py-3.5 text-right tabular-nums ${sortKey === "newcomers" ? "font-bold text-foreground" : "text-muted-foreground"}`}>
-                  {r.totalNewcomers.toLocaleString("fr-FR")}
+                <td className={`px-4 py-3.5 text-right ${sortKey === "newcomers" ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="tabular-nums">{r.totalNewcomers.toLocaleString("fr-FR")}</span>
+                    <DiffBadge diff={r.newcomersDiff} />
+                  </div>
                 </td>
-                <td className={`px-4 py-3.5 text-right tabular-nums ${sortKey === "decisions" ? "font-bold text-foreground" : "text-muted-foreground"}`}>
-                  {r.totalDecisions.toLocaleString("fr-FR")}
+                <td className={`px-4 py-3.5 text-right ${sortKey === "decisions" ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="tabular-nums">{r.totalDecisions.toLocaleString("fr-FR")}</span>
+                    <DiffBadge diff={r.decisionsDiff} />
+                  </div>
                 </td>
                 <td className={`px-4 py-3.5 text-right ${sortKey === "consistency" ? "font-bold" : ""}`}>
                   <div className="flex items-center justify-end gap-2">

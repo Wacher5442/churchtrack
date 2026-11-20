@@ -6,6 +6,7 @@ import PastorFormModal from "./PastorFormModal";
 import ResetPasswordModal from "./ResetPasswordModal";
 import CredentialsModal from "./CredentialsModal";
 import AssignmentPanel from "./AssignmentPanel";
+import ImportModal from "../../_components/ImportModal";
 
 type Pastor = {
   id: string;
@@ -26,6 +27,7 @@ export default function PastorsClient({ initialPastors }: Props) {
   const [pastors, setPastors] = useState<Pastor[]>(initialPastors);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Pastor | null>(null);
   const [resetting, setResetting] = useState<Pastor | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
@@ -69,22 +71,30 @@ export default function PastorsClient({ initialPastors }: Props) {
   return (
     <>
       {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Pasteurs</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {active} actif{active > 1 ? "s" : ""} sur {pastors.length}
-          </p>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <p className="text-sm text-muted-foreground">
+          {active} actif{active > 1 ? "s" : ""} sur {pastors.length}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-neutral-50 transition-colors"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Importer
+          </button>
+          <button
+            onClick={() => { setEditing(null); setShowForm(true); }}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nouveau pasteur
+          </button>
         </div>
-        <button
-          onClick={() => { setEditing(null); setShowForm(true); }}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"
-        >
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Nouveau pasteur
-        </button>
       </div>
 
       {/* Recherche */}
@@ -311,6 +321,14 @@ export default function PastorsClient({ initialPastors }: Props) {
           pastor={assigningTo}
           onClose={() => setAssigningTo(null)}
           onChanged={refresh}
+        />
+      )}
+
+      {showImport && (
+        <ImportModal
+          type="pastors"
+          onClose={() => setShowImport(false)}
+          onImported={refresh}
         />
       )}
     </>

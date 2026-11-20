@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ChurchFormModal from "./ChurchFormModal";
+import ImportModal from "../../_components/ImportModal";
 
 type Church = {
   id: string;
@@ -19,6 +20,7 @@ export default function ChurchesClient({ initialChurches }: Props) {
   const router = useRouter();
   const [churches, setChurches] = useState<Church[]>(initialChurches);
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Church | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -58,22 +60,30 @@ export default function ChurchesClient({ initialChurches }: Props) {
   return (
     <>
       {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Églises</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {active} active{active > 1 ? "s" : ""} sur {churches.length}
-          </p>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <p className="text-sm text-muted-foreground">
+          {active} active{active > 1 ? "s" : ""} sur {churches.length}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-neutral-50 transition-colors"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Importer
+          </button>
+          <button
+            onClick={() => { setEditing(null); setShowModal(true); }}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nouvelle église
+          </button>
         </div>
-        <button
-          onClick={() => { setEditing(null); setShowModal(true); }}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"
-        >
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Nouvelle église
-        </button>
       </div>
 
       {/* Recherche */}
@@ -209,12 +219,20 @@ export default function ChurchesClient({ initialChurches }: Props) {
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       {showModal && (
         <ChurchFormModal
           church={editing}
           onClose={() => setShowModal(false)}
           onSaved={refresh}
+        />
+      )}
+
+      {showImport && (
+        <ImportModal
+          type="churches"
+          onClose={() => setShowImport(false)}
+          onImported={refresh}
         />
       )}
     </>

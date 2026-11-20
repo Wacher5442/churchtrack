@@ -59,7 +59,7 @@ export default async function ClassementPage({
         weekStart: { gte: prevFrom, lte: prevTo },
         status: "SUBMITTED",
       },
-      select: { churchId: true, attendance: true },
+      select: { churchId: true, attendance: true, newcomers: true, salvationDecisions: true },
     }),
   ]);
 
@@ -85,12 +85,14 @@ export default async function ClassementPage({
   }
 
   // Agréger par église — période précédente
-  const prevMap = new Map<string, { totalAttendance: number; count: number }>();
+  const prevMap = new Map<string, { totalAttendance: number; totalNewcomers: number; totalDecisions: number; count: number }>();
   for (const r of prevReports) {
     const key = r.churchId.toString();
-    if (!prevMap.has(key)) prevMap.set(key, { totalAttendance: 0, count: 0 });
+    if (!prevMap.has(key)) prevMap.set(key, { totalAttendance: 0, totalNewcomers: 0, totalDecisions: 0, count: 0 });
     const s = prevMap.get(key)!;
     s.totalAttendance += r.attendance;
+    s.totalNewcomers += r.newcomers;
+    s.totalDecisions += r.salvationDecisions;
     s.count += 1;
   }
 
@@ -112,7 +114,10 @@ export default async function ClassementPage({
       trend = ((totalAttendance - prev.totalAttendance) / prev.totalAttendance) * 100;
     }
 
-    const base = { churchId: key, name: church.name, totalAttendance, avgAttendance, totalNewcomers, totalDecisions, submittedWeeks, consistencyPct, trend };
+    const newcomersDiff: number | null = prev != null ? totalNewcomers - prev.totalNewcomers : null;
+    const decisionsDiff: number | null = prev != null ? totalDecisions - prev.totalDecisions : null;
+
+    const base = { churchId: key, name: church.name, totalAttendance, avgAttendance, totalNewcomers, totalDecisions, submittedWeeks, consistencyPct, trend, newcomersDiff, decisionsDiff };
     return { ...base, sortValue: getSortValue(base, sortParam) };
   });
 
@@ -126,9 +131,6 @@ export default async function ClassementPage({
   const ranks: ChurchRank[] = rawRanks.map((r, i) => ({ ...r, rank: i + 1 }));
   const ranked = ranks.filter((r) => r.submittedWeeks > 0);
   const unranked = ranks.filter((r) => r.submittedWeeks === 0);
-
-  // Top 3 pour le podium
-  const top3 = ranked.slice(0, 3);
 
   const totalChurches = churches.length;
   const participatingChurches = ranked.length;
@@ -147,46 +149,8 @@ export default async function ClassementPage({
 
       <ClassementFilters currentWeeks={weeksParam} currentSort={sortParam} />
 
-      {/* Podium top 3 */}
-      {top3.length >= 2 && (
-        <div className="mt-6 mb-6">
-          <h2 className="text-base font-semibold text-foreground mb-4">Podium</h2>
-          <div className="grid grid-cols-3 gap-3 max-w-xl">
-            {/* 2e place */}
-            <PodiumCard
-              rank={top3[1]}
-              height="h-28"
-              medal="🥈"
-              colorClass="bg-neutral-100 border-neutral-300"
-            />
-            {/* 1re place (au centre, plus haute) */}
-            <PodiumCard
-              rank={top3[0]}
-              height="h-36"
-              medal="🥇"
-              colorClass="bg-amber-50 border-amber-300"
-              highlight
-            />
-            {/* 3e place */}
-            {top3[2] ? (
-              <PodiumCard
-                rank={top3[2]}
-                height="h-20"
-                medal="🥉"
-                colorClass="bg-orange-50 border-orange-200"
-              />
-            ) : (
-              <div />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tableau complet */}
-      <div>
-        <h2 className="text-base font-semibold text-foreground mb-3">
-          Classement complet
-        </h2>
+      {/* Tableau */}
+      <div className="mt-6">
         <RankingTable ranks={ranked} sortKey={sortParam} periodWeeks={periodWeeks} />
 
         {/* Églises sans rapport */}
@@ -212,37 +176,3 @@ export default async function ClassementPage({
   );
 }
 
-function PodiumCard({
-  rank,
-  height,
-  medal,
-  colorClass,
-  highlight = false,
-}: {
-  rank: ChurchRank;
-  height: string;
-  medal: string;
-  colorClass: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="text-center">
-        <p className={`text-xs font-semibold ${highlight ? "text-foreground" : "text-muted-foreground"} leading-tight line-clamp-2`}>
-          {rank.name}
-        </p>
-        <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
-          {rank.totalAttendance.toLocaleString("fr-FR")} prés.
-        </p>
-      </div>
-      <div
-        className={`w-full rounded-t-xl border-2 ${colorClass} ${height} flex flex-col items-center justify-center gap-1`}
-      >
-        <span className="text-2xl">{medal}</span>
-        <span className={`text-sm font-bold ${highlight ? "text-foreground" : "text-muted-foreground"}`}>
-          #{rank.rank}
-        </span>
-      </div>
-    </div>
-  );
-}
